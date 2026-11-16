@@ -162,8 +162,11 @@ begin
     values(v_order_id,v_request_id,v_product.id,v_product.name,v_product.unit,v_qty,v_product.price);
   end loop;
 
+  insert into public.payment_transactions(order_id,payer_id,amount,currency,provider,status)
+  values(v_order_id,v_buyer,v_subtotal,'KGS','provider_pending','pending');
+
   insert into public.order_status_events(order_id,old_status,new_status,note,changed_by)
-  values(v_order_id,null,'new','Заказ создан покупателем',v_buyer);
+  values(v_order_id,null,'new','Заказ создан покупателем. Платёж ожидает подключения провайдера.',v_buyer);
   return v_order_id;
 end;
 $$;
