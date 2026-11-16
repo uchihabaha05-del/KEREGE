@@ -205,7 +205,34 @@ function renderTimeline(events){
   return '<div class="timeline-event"><b>'+esc(label)+'</b><div>'+new Date(e.created_at).toLocaleString('ru-RU')+'</div></div>';
  }).join('')+'</div>';
 }
+function unifiedStatusLabel(s){return ({new:'Новый',accepted:'Принят',preparing:'Собирается',ready_for_pickup:'Готов к выдаче',shipped:'В пути',delivered:'Доставлен',completed:'Завершён',declined:'Отклонён',cancelled:'Отменён'})[s]||s}
+async function updateUnifiedOrder(id,status){
+ const note=prompt('Комментарий к изменению статуса (необязательно):')||'';
+ const {error}=await db.rpc('set_supplier_order_status',{p_order_id:id,p_new_status:status,p_note:note});
+ if(error){showToast(error.message,'error');return}
+ showToast('Статус заказа обновлён');await loadUnifiedOrders();await loadRequests();
+}
+async function loadUnifiedOrders(){
+ const supplier=profile.role==='supplier';
+ let q=db.from('orders').select('id,order_number,status,currency,subtotal,delivery_fee,total,delivery_method,delivery_address,delivery_note,recipient_name,recipient_phone,buyer_note,supplier_note,created_at,updated_at,order_items(id,product_name,unit,quantity,unit_price,line_total)').order('created_at',{ascending:false}).limit(100);
+ q=supplier?q.eq('supplier_id',user.id):q.eq('buyer_id',user.id);
+ const {data,error}=await q;
+ if(error){$('unifiedOrdersList').innerHTML='<div class="notice">Не удалось загрузить новые заказы: '+esc(error.message)+'</div>';return}
+ const statusClass={accepted:'accepted',declined:'declined',completed:'completed'};
+ $('unifiedOrdersList').innerHTML=data?.length?data.map(o=>{
+  const lines=(o.order_items||[]).map(i=>'<div class="item"><b>'+esc(i.product_name)+'</b><div class="muted">'+Number(i.quantity).toLocaleString('ru-RU')+' '+esc(i.unit)+' × '+Number(i.unit_price).toLocaleString('ru-RU')+' сом</div><div class="muted">Сумма: '+Number(i.line_total).toLocaleString('ru-RU')+' сом</div></div>').join('');
+  let actions='';
+  if(supplier&&o.status==='new')actions='<div class="row" style="margin-top:12px"><button class="primary" onclick="updateUnifiedOrder(\''+o.id+'\',\'accepted\')">Принять заказ</button><button class="light" onclick="updateUnifiedOrder(\''+o.id+'\',\'declined\')">Отклонить</button></div>';
+  if(supplier&&o.status==='accepted')actions='<div class="row" style="margin-top:12px"><button class="primary" onclick="updateUnifiedOrder(\''+o.id+'\',\'preparing\')">Начать сборку</button><button class="gold" onclick="updateUnifiedOrder(\''+o.id+'\',o.delivery_method===\'pickup\'?\'ready_for_pickup\':\'shipped\')">'+(o.delivery_method==='pickup'?'Готов к самовывозу':'Передать в доставку')+'</button></div>';
+  if(supplier&&o.status==='preparing')actions='<button class="gold" style="margin-top:12px" onclick="updateUnifiedOrder(\''+o.id+'\',o.delivery_method===\'pickup\'?\'ready_for_pickup\':\'shipped\')">'+(o.delivery_method==='pickup'?'Готов к самовывозу':'Передать в доставку')+'</button>';
+  if(supplier&&o.status==='shipped')actions='<button class="gold" style="margin-top:12px" onclick="updateUnifiedOrder(\''+o.id+'\',\'delivered\')">Подтвердить доставку</button>';
+  if(supplier&&o.status==='ready_for_pickup')actions='<button class="gold" style="margin-top:12px" onclick="updateUnifiedOrder(\''+o.id+'\',\'completed\')">Завершить выдачу</button>';
+  const fulfillment=o.delivery_method==='supplier_delivery'?'Доставка поставщиком':'Самовывоз';
+  return '<article class="order-card"><div class="order-head"><div><div class="order-id">KEREGE · №'+esc(String(o.order_number))+'</div><div class="order-name">Заказ от '+new Date(o.created_at).toLocaleDateString('ru-RU')+'</div></div><span class="status-pill '+(statusClass[o.status]||'')+'">'+esc(unifiedStatusLabel(o.status))+'</span></div>'+lines+'<div class="order-total">'+Number(o.total).toLocaleString('ru-RU')+' сом</div><div class="order-meta"><b>Получение:</b> '+fulfillment+(o.delivery_address?' · '+esc(o.delivery_address):'')+(o.delivery_note?' · '+esc(o.delivery_note):'')+'</div>'+(o.recipient_name||o.recipient_phone?'<div class="order-meta">Получатель: '+esc(o.recipient_name)+' · '+esc(o.recipient_phone)+'</div>':'')+(o.buyer_note?'<div class="order-meta">Комментарий: '+esc(o.buyer_note)+'</div>':'')+'<div class="order-meta">Оплата: ожидает подключения платёжного сервиса · '+esc(o.currency)+'</div>'+actions+'</article>';
+ }).join(''):'<div class="empty-state">Полноценных заказов пока нет. Заказы из корзины появятся здесь.</div>';
+}
 async function loadRequests(){
+ await loadUnifiedOrders();
  let data=[],error=null;
  if(profile.role==='supplier'){
   const result=await db.rpc('get_supplier_purchase_requests');data=result.data||[];error=result.error;
