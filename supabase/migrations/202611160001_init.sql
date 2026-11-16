@@ -145,8 +145,15 @@ alter table public.group_buy_members enable row level security;
 revoke all on public.profiles,public.supplier_public_profiles,public.products,public.purchase_requests,public.group_buys,public.group_buy_members from anon,authenticated;
 grant select on public.supplier_public_profiles,public.products,public.group_buys to anon,authenticated;
 grant select on public.profiles,public.purchase_requests,public.group_buy_members to authenticated;
-grant insert,update,delete on public.products,public.group_buys to authenticated;
-grant insert on public.purchase_requests to authenticated;
+grant insert (supplier_id,name,category,price,unit,min_order,city) on public.products to authenticated;
+grant update (name,category,price,unit,min_order,city,is_active) on public.products to authenticated;
+grant delete on public.products to authenticated;
+
+grant insert (supplier_id,title,unit,price,target_qty,city,ends_at) on public.group_buys to authenticated;
+grant update (title,unit,price,target_qty,city,ends_at,status) on public.group_buys to authenticated;
+grant delete on public.group_buys to authenticated;
+
+grant insert (buyer_id,supplier_id,product_id,quantity,message) on public.purchase_requests to authenticated;
 grant update(status) on public.purchase_requests to authenticated;
 grant execute on function public.join_group_buy(uuid,numeric) to authenticated;
 
