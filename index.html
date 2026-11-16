@@ -27,7 +27,47 @@ function renderProducts(){let q=($('search').value||'').toLowerCase(),a=products
 async function requestProduct(id){let p=products.find(x=>x.id===id),qty=Number(prompt('Количество, минимум '+p.min_order,p.min_order));if(!Number.isFinite(qty)||qty<p.min_order)return alert('Количество меньше минимального заказа.');let message=prompt('Комментарий поставщику (необязательно)')||'';let {error}=await db.from('purchase_requests').insert({buyer_id:user.id,supplier_id:p.supplier_id,product_id:p.id,quantity:qty,message});if(error)alert(error.message);else{alert('Заявка отправлена');await loadRequests()}}
 async function loadGroups(){let {data,error}=await db.from('group_buys').select('id,title,unit,price,target_qty,committed_qty,city,ends_at,supplier_id,supplier_public_profiles(display_name)').in('status',['open','target_reached']).order('created_at',{ascending:false});if(error){$('groupsList').textContent=error.message;return}$('groupsList').innerHTML=data?.length?data.map(g=>'<article class="card"><div class="emoji">🤝</div><div class="body"><h3>'+esc(g.title)+'</h3><div class="muted">'+esc(g.supplier_public_profiles?.display_name||'Поставщик')+' · '+esc(g.city)+'</div><div class="price">'+Number(g.price).toLocaleString('ru-RU')+' сом / '+esc(g.unit)+'</div><div class="bar"><i style="width:'+Math.min(100,100*g.committed_qty/g.target_qty)+'%"></i></div><div class="muted">'+g.committed_qty+' / '+g.target_qty+' '+esc(g.unit)+'</div><button class="primary" style="width:100%;margin-top:9px" onclick="joinGroup(\''+g.id+'\')">Участвовать</button></div></article>').join(''):'<p class="muted">Открытых закупок пока нет.</p>'}
 async function joinGroup(id){let q=Number(prompt('Какой объём хотите запросить?'));if(!Number.isFinite(q)||q<=0)return;let {error}=await db.rpc('join_group_buy',{p_group_buy_id:id,p_quantity:q});if(error)alert(error.message);else{alert('Объём добавлен в совместную закупку. Это заявка, не оплата.');await loadGroups();await loadRequests()}}
-async function loadRequests(){let query=profile.role==='supplier'?db.from('purchase_requests').select('id,quantity,message,status,created_at,products(name)').eq('supplier_id',user.id):db.from('purchase_requests').select('id,quantity,message,status,created_at,products(name)').eq('buyer_id',user.id);let {data,error}=await query.order('created_at',{ascending:false});let {data:members,error:me}=await db.from('group_buy_members').select('id,quantity,status,created_at,group_buys(title)').eq('user_id',user.id).order('created_at',{ascending:false});if(error||me){$('requestsList').textContent=(error||me).message;return}let a=(data||[]).map(r=>'<div class="item"><b>'+esc(r.products?.name||'Товар')+'</b><div class="muted">'+r.quantity+' ед. · '+esc(r.status)+' · '+esc(r.message)+'</div></div>');let b=(members||[]).map(r=>'<div class="item"><b>Совместная закупка: '+esc(r.group_buys?.title||'')+'</b><div class="muted">'+r.quantity+' ед. · '+esc(r.status)+'</div></div>');$('requestsList').innerHTML=a.concat(b).join('')||'Заявок пока нет.'}
+async function updateRequestStatus(requestId,newStatus){
+  const labels={accepted:'принять заявку',declined:'отклонить заявку',completed:'завершить заказ'};
+  if(!confirm('Вы уверены, что хотите '+labels[newStatus]+'?'))return;
+  const {error}=await db.rpc('set_supplier_request_status',{p_request_id:requestId,p_new_status:newStatus});
+  if(error){alert(error.message);return}
+  await loadRequests();
+  alert('Статус заявки обновлён.');
+}
+async function loadRequests(){
+  let data=[],error=null;
+  if(profile.role==='supplier'){
+    const result=await db.rpc('get_supplier_purchase_requests');
+    data=result.data||[];error=result.error;
+  }else{
+    const result=await db.from('purchase_requests')
+      .select('id,quantity,message,status,created_at,products(name,unit,price)')
+      .eq('buyer_id',user.id).order('created_at',{ascending:false});
+    data=result.data||[];error=result.error;
+  }
+  const {data:members,error:me}=await db.from('group_buy_members')
+    .select('id,quantity,status,created_at,group_buys(title)')
+    .eq('user_id',user.id).order('created_at',{ascending:false});
+  if(error||me){$('requestsList').textContent=(error||me).message;return}
+  const statusNames={new:'Новая',accepted:'Принята',declined:'Отклонена',completed:'Завершена',cancelled:'Отменена'};
+  let orders=[];
+  if(profile.role==='supplier'){
+    orders=data.map(r=>{
+      const actions=r.request_status==='new'
+        ? '<div class="row" style="margin-top:10px"><button class="primary" onclick="updateRequestStatus(\''+r.request_id+'\',\'accepted\')">Принять</button><button class="light" onclick="updateRequestStatus(\''+r.request_id+'\',\'declined\')">Отклонить</button></div>'
+        : r.request_status==='accepted'
+          ? '<div class="row" style="margin-top:10px"><button class="gold" onclick="updateRequestStatus(\''+r.request_id+'\',\'completed\')">Завершить заказ</button></div>'
+          : '';
+      const phone=r.buyer_phone?'<a href="tel:'+esc(r.buyer_phone)+'">'+esc(r.buyer_phone)+'</a>':'Не указан';
+      return '<div class="item"><b>'+esc(r.product_name)+'</b><div class="muted">Покупатель: '+esc(r.buyer_name)+' · Телефон: '+phone+'</div><div style="margin-top:5px">'+esc(r.quantity)+' '+esc(r.unit)+' · '+Number(r.unit_price).toLocaleString('ru-RU')+' сом / '+esc(r.unit)+'</div><div class="muted">Сумма по цене товара: '+(Number(r.quantity)*Number(r.unit_price)).toLocaleString('ru-RU')+' сом</div><div class="muted">Статус: <b>'+statusNames[r.request_status]+'</b> · '+new Date(r.requested_at).toLocaleString('ru-RU')+'</div>'+(r.message?'<div class="muted">Комментарий: '+esc(r.message)+'</div>':'')+actions+'</div>';
+    });
+  }else{
+    orders=data.map(r=>'<div class="item"><b>'+esc(r.products?.name||'Товар')+'</b><div class="muted">'+esc(r.quantity)+' ед. · Статус: '+(statusNames[r.status]||esc(r.status))+'</div>'+(r.message?'<div class="muted">Комментарий: '+esc(r.message)+'</div>':'')+'</div>');
+  }
+  const groupOrders=(members||[]).map(r=>'<div class="item"><b>Совместная закупка: '+esc(r.group_buys?.title||'')+'</b><div class="muted">'+esc(r.quantity)+' ед. · '+esc(r.status)+'</div></div>');
+  $('requestsList').innerHTML=orders.concat(groupOrders).join('')||'Заявок пока нет.';
+}
 async function createProduct(){let name=$('pName').value.trim(),price=Number($('pPrice').value),unit=$('pUnit').value.trim(),min=Number($('pMin').value),category=$('pCat').value;if(!name||price<=0||!unit||min<=0)return msg('productStatus','Заполните поля корректно.','error');let {error}=await db.from('products').insert({supplier_id:user.id,name,price,unit,min_order:min,category,city:'Бишкек'});if(error)msg('productStatus',error.message,'error');else{msg('productStatus','Товар опубликован.','success');['pName','pPrice','pUnit'].forEach(x=>$(x).value='');await loadProducts()}}
 async function createGroup(){let title=$('gName').value.trim(),price=Number($('gPrice').value),unit=$('gUnit').value.trim(),target=Number($('gTarget').value),end=$('gEnd').value;if(!title||price<=0||!unit||target<=0||!end)return msg('groupStatus','Заполните поля корректно.','error');let {error}=await db.from('group_buys').insert({supplier_id:user.id,title,price,unit,target_qty:target,ends_at:new Date(end+'T23:59:59').toISOString(),city:'Бишкек'});if(error)msg('groupStatus',error.message,'error');else{msg('groupStatus','Совместная закупка опубликована.','success');await loadGroups()}}
 boot();
