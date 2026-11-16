@@ -36,66 +36,31 @@ body{background:radial-gradient(circle at 90% 0%,#e5eee6 0,transparent 28%),var(
 @media(max-width:700px){.wrap{padding:12px}.hero{padding:21px}.tabs{top:56px;margin:8px -12px;padding:8px 12px}.tab{padding:10px 12px}.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.product-photo{height:125px}.panel{padding:15px}}
 @media(max-width:390px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.product-photo{height:105px}.product-card .body{padding:9px}.product-price-row .price{font-size:17px}}
 
-/* KEREGE marketplace refresh — classifieds-inspired layout */
-:root{--g:#0866d9;--gold:#ffcf33;--bg:#f5f6f7;--ink:#202326;--muted:#737b84;--line:#e5e7eb}
-body{background:#f5f6f7;color:#202326;font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif}
-.top{background:#fff;color:#202326;padding:12px max(16px,calc((100% - 1180px)/2));min-height:68px;border-bottom:1px solid #e7e9ec;box-shadow:none}
-.logo{color:#0866d9;font-size:25px;letter-spacing:1px}.logo small{color:#737b84;font-size:9px;letter-spacing:1px}
-.top .muted{color:#59636e!important}.top .light{background:#eef3fa;color:#1459a6}
-.wrap{max-width:1180px;padding:20px 22px}
-.hero{background:#fff;color:#202326;border:1px solid #e5e7eb;border-radius:12px;padding:22px 24px;margin-bottom:16px;box-shadow:none}
-.hero>div:first-child{color:#0866d9!important;font-weight:800}
-.hero h1{font-size:clamp(24px,4vw,34px);line-height:1.15;margin:8px 0}
-.hero p{color:#626b75;font-size:14px;line-height:1.55;margin-bottom:0}
-.panel{border:1px solid #e5e7eb;border-radius:12px;box-shadow:none;padding:17px}
-.tabs{top:68px;background:#f5f6f7ed;padding:10px 0;margin:8px 0 16px;gap:7px}
-.tab{border:1px solid #e0e4e8;border-radius:8px;background:#fff;color:#39434d;padding:10px 14px;font-size:13px;box-shadow:none}
-.tab.active{background:#0866d9;border-color:#0866d9;color:#fff}
-.catalog-tools{grid-template-columns:minmax(0,1fr) 210px;gap:10px;margin:12px 0}
-.catalog-tools input,.catalog-tools select{min-height:48px;border:1px solid #d8dde3;border-radius:8px;background:#fff}
-input,select,textarea{border:1px solid #d8dde3;border-radius:8px;color:#202326}
-input:focus,select:focus,textarea:focus{outline:2px solid #b9d5ff;border-color:#0866d9}
-.grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
-.card,.product-card{border:1px solid #e3e6ea;border-radius:10px;background:#fff;box-shadow:none;transition:box-shadow .16s,border-color .16s}
-.product-card:hover{border-color:#c4d7f2;box-shadow:0 5px 18px #172b4510}
-.product-photo{height:176px;background:#f0f2f4}
-.product-card .body{padding:12px 13px}
-.product-category{background:#eef4ff;color:#2862a7;border-radius:5px;font-size:10px}
-.product-card .body h3{font-size:14px;line-height:1.35;min-height:36px;color:#252a30}
-.product-supplier{font-size:11px;color:#747d87}
-.product-price-row .price{font-size:21px;color:#202326;margin:8px 0 2px}
-.product-unit{color:#737b84;font-size:12px}
-.product-min{color:#747d87;font-size:11px;margin:5px 0 9px}
-.product-actions button{border-radius:7px;padding:10px 8px;font-size:12px}
-.product-actions .primary,.primary{background:#0866d9;color:#fff}
-.gold{background:#ffcf33;color:#202326}
-.light{background:#eef1f4;color:#3f4b57}
-.favorite-btn{background:#f1f3f5;color:#4a5662;border-radius:7px}
-.favorite-btn.active{background:#fff0ee;color:#c4473d}
-.order-card,.notify-panel,.stat-card{border-radius:10px;box-shadow:none}
-.order-total,.stat-value{color:#0866d9}
-.status-pill{border-radius:6px}
-.empty-catalog,.empty-state{border-radius:10px;background:#fff}
-.notice{border-radius:8px}
-button{border-radius:8px}
-.footer{color:#9299a1}
-@media(max-width:900px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:700px){
- .wrap{padding:12px}
- .top{padding:11px 14px;min-height:60px}
- .logo{font-size:22px}
- .hero{padding:18px;border-radius:10px}
- .tabs{top:60px;margin:8px -12px 14px;padding:8px 12px}
- .tab{padding:10px 12px}
- .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
- .product-photo{height:132px}
- .product-card .body{padding:10px}
- .product-price-row .price{font-size:18px}
- .catalog-tools{grid-template-columns:1fr}
- .panel{padding:13px}
-}
-@media(max-width:360px){.product-photo{height:112px}.product-card .body h3{font-size:12px}}
 
+/* KEREGE marketplace refresh — violet theme */
+:root{--g:#6d28d9;--gold:#c4a7ff;--bg:#f7f5fb;--ink:#24202d;--muted:#797382;--line:#e8e2f0}
+body{background:#f7f5fb;color:#24202d}
+.top{background:#fff;color:#24202d;border-bottom:1px solid #e8e2f0}
+.logo{color:#6d28d9}
+.logo small{color:#797382}
+.hero>div:first-child{color:#6d28d9!important}
+.tab.active{background:#6d28d9;border-color:#6d28d9;color:#fff}
+.product-category{background:#f1eaff;color:#6530b5}
+.product-card:hover{border-color:#d4c1f4;box-shadow:0 5px 18px #51209a12}
+.product-price-row .price,.order-total,.stat-value{color:#6d28d9}
+.product-photo{background:#f0ebf8}
+.product-actions .primary,.primary{background:#6d28d9;color:#fff}
+.gold{background:#c4a7ff;color:#2e1b4d}
+.light{background:#f0ebf7;color:#51465f}
+.favorite-btn{background:#f0ebf7;color:#5b4a70}
+input:focus,select:focus,textarea:focus{outline:2px solid #d9c7fa;border-color:#7c3aed}
+.status-pill.accepted{background:#eee7fb;color:#6032a8}
+.overview-welcome{background:linear-gradient(120deg,#4c1d95,#7c3aed)}
+.bar i{background:#9b70ed}
+.notify-count{background:#c4a7ff;color:#2e1b4d}
+.toast{background:#4c1d95}
+.toast.error{background:#8f352e}
+@media(max-width:700px){.tabs{background:#f7f5fbed}}
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head>
 <body><div id="toast" class="toast" role="status" aria-live="polite"></div><header class="top"><div class="logo">KEREGE<small>ОПТОВАЯ ТОРГОВЛЯ ПРОЩЕ</small></div><div class="row"><span id="userEmail" class="muted" style="color:#dce8df"></span><button id="logout" class="light hidden" onclick="logout()">Выйти</button></div></header>
 <main class="wrap"><section class="hero"><div style="color:#e9c77f;font-size:10px;letter-spacing:2px">ТОРГОВАЯ СЕТЬ БИШКЕКА</div><h1>Закупай выгоднее.<br>Расти вместе.</h1><p>Находите поставщиков, сравнивайте оптовые предложения и объединяйтесь с другими магазинами для совместных закупок.</p></section>
