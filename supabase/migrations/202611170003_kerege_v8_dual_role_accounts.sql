@@ -28,12 +28,12 @@ begin
    v_using:=p.qual;
    v_check:=p.with_check;
    if v_using is not null then
-     v_using:=regexp_replace(v_using,'role[[:space:]]*=[[:space:]]*''buyer''','(role = ''buyer'' or role = ''both'')','gi');
-     v_using:=regexp_replace(v_using,'role[[:space:]]*=[[:space:]]*''supplier''','(role = ''supplier'' or role = ''both'')','gi');
+     v_using:=regexp_replace(v_using,'([a-z_][a-z0-9_]*\\.)?role[[:space:]]*=[[:space:]]*''buyer''','\\1role = ''buyer'' or \\1role = ''both''','gi');
+     v_using:=regexp_replace(v_using,'([a-z_][a-z0-9_]*\\.)?role[[:space:]]*=[[:space:]]*''supplier''','\\1role = ''supplier'' or \\1role = ''both''','gi');
    end if;
    if v_check is not null then
-     v_check:=regexp_replace(v_check,'role[[:space:]]*=[[:space:]]*''buyer''','(role = ''buyer'' or role = ''both'')','gi');
-     v_check:=regexp_replace(v_check,'role[[:space:]]*=[[:space:]]*''supplier''','(role = ''supplier'' or role = ''both'')','gi');
+     v_check:=regexp_replace(v_check,'([a-z_][a-z0-9_]*\\.)?role[[:space:]]*=[[:space:]]*''buyer''','\\1role = ''buyer'' or \\1role = ''both''','gi');
+     v_check:=regexp_replace(v_check,'([a-z_][a-z0-9_]*\\.)?role[[:space:]]*=[[:space:]]*''supplier''','\\1role = ''supplier'' or \\1role = ''both''','gi');
    end if;
    select string_agg(case when x='public' then 'public' else quote_ident(x) end,',')
      into v_roles from unnest(p.roles) x;
@@ -58,8 +58,8 @@ begin
      and pg_get_functiondef(p.oid) ~* 'role[[:space:]]*=[[:space:]]*''(buyer|supplier)'''
  loop
    v_definition:=pg_get_functiondef(f.oid);
-   v_definition:=regexp_replace(v_definition,'role[[:space:]]*=[[:space:]]*''buyer''','(role = ''buyer'' or role = ''both'')','gi');
-   v_definition:=regexp_replace(v_definition,'role[[:space:]]*=[[:space:]]*''supplier''','(role = ''supplier'' or role = ''both'')','gi');
+   v_definition:=regexp_replace(v_definition,'([a-z_][a-z0-9_]*\\.)?role[[:space:]]*=[[:space:]]*''buyer''','\\1role = ''buyer'' or \\1role = ''both''','gi');
+   v_definition:=regexp_replace(v_definition,'([a-z_][a-z0-9_]*\\.)?role[[:space:]]*=[[:space:]]*''supplier''','\\1role = ''supplier'' or \\1role = ''both''','gi');
    execute v_definition;
  end loop;
 end $$;
