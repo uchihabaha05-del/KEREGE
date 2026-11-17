@@ -300,7 +300,8 @@ async function loadGroups(){
   const labels={open:'Набор объёма',target_reached:'Два покупателя и минимальный объём набраны — можно отправить',offered:'Ожидает ответа поставщика',accepted:'Поставщик принял',declined:'Поставщик отклонил'};
   let actions='';
   if(profile?.role==='buyer'&&['open','target_reached'].includes(g.status)&&!mine&&people.length<2)actions+='<button class="primary" onclick="joinGroup(\''+g.id+'\')">Присоединиться</button>';
-  if(profile?.role==='buyer'&&mine&&['open','target_reached'].includes(g.status))actions+='<button class="light" onclick="joinGroup(\''+g.id+'\')">Изменить свой объём</button><button class="light" onclick="leaveGroup(\''+g.id+'\')">Выйти из группы</button>';
+  if(profile?.role==='buyer'&&mine&&['open','target_reached'].includes(g.status))actions+='<button class="light" onclick="joinGroup(\''+g.id+'\')">Изменить свой объём</button>';
+  if(profile?.role==='buyer'&&mine&&['open','target_reached','offered'].includes(g.status))actions+='<button class="light" onclick="leaveGroup(\''+g.id+'\')">Выйти из группы</button>';
   if(isSupplier&&g.status==='offered')actions+='<button class="primary" onclick="respondGroup(\''+g.id+'\',\'accept\')">Принять</button><button class="light" onclick="respondGroup(\''+g.id+'\',\'decline\')">Отклонить</button>';
   if(isSupplier&&expired&&['open','target_reached'].includes(g.status)){actions+='<button class="light" onclick="resolveExpiredGroup(\''+g.id+'\',\'extend\')">Продлить срок</button><button class="light" onclick="resolveExpiredGroup(\''+g.id+'\',\'cancel\')">Отменить группу</button>';if(total>=Number(g.target_qty))actions+='<button class="gold" onclick="resolveExpiredGroup(\''+g.id+'\',\'accept_current\')">Предложить текущий объём</button>';}
   if(g.status==='declined'&&isCreator)actions+='<div class="notice">Поставщик отклонил заявку. Можно создать новую группу по исходному предложению.</div>';
