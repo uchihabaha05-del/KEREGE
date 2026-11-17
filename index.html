@@ -283,12 +283,12 @@ async function loadGroups(){
  if(error){list.textContent=error.message;return}
  if(!groups?.length){list.innerHTML='<p class="muted">Пока нет открытых групп. Создайте первую!</p>';return}
  const ids=groups.map(g=>g.id);
- const {data:members,error:membersError}=await db.from('group_buy_members').select('group_buy_id,user_id,quantity,status,profiles(full_name)').in('group_buy_id',ids).neq('status','withdrawn');
+ const {data:members,error:membersError}=await db.from('group_buy_member_public').select('group_buy_id,user_id,quantity,status,full_name').in('group_buy_id',ids).neq('status','withdrawn');
  if(membersError){list.textContent=membersError.message;return}
  list.innerHTML=groups.map(g=>{
   const people=(members||[]).filter(m=>m.group_buy_id===g.id),total=Number(g.committed_qty||0),count=people.length,progress=Math.min(100,Math.max(0,100*count/Number(g.target_people||1)));
   const mine=people.find(m=>m.user_id===user.id),isCreator=g.creator_id===user.id,isSupplier=g.supplier_id===user.id;
-  const names=people.map(m=>'<div class="row" style="justify-content:space-between"><span>'+esc(m.profiles?.full_name||'Покупатель')+'</span><b>'+Number(m.quantity).toLocaleString('ru-RU')+' '+esc(g.unit)+'</b></div>').join('');
+  const names=people.map(m=>'<div class="row" style="justify-content:space-between"><span>'+esc(m.full_name||'Покупатель')+'</span><b>'+Number(m.quantity).toLocaleString('ru-RU')+' '+esc(g.unit)+'</b></div>').join('');
   const statusLabel={open:'Набирает участников',target_reached:'Цель достигнута',offered:'Предложение у поставщика',countered:'Поставщик предложил другие условия',accepted:'Поставщик согласился'}[g.status]||g.status;
   let actions='';
   if(g.status==='open'&&!mine&&profile?.role==='buyer')actions+='<button class="primary" onclick="joinGroup(\''+g.id+'\')">Присоединиться</button>';
