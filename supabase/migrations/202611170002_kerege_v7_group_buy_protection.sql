@@ -305,3 +305,38 @@ grant execute on function public.resolve_group_buy_dispute(uuid,text,text) to au
 grant execute on function public.confirm_group_buy_deposit_payment(uuid,text,text) to service_role;
 grant execute on function public.confirm_group_buy_deposit_settlement(uuid,text,text) to service_role;
 grant execute on function public.flag_unconfirmed_group_buy_deliveries() to service_role;
+
+
+-- Capture the supplier's acceptance timestamp exactly once; never start the
+-- 24-hour deposit window from the buyer's first page visit.
+create or replace function public.set_group_buy_accepted_at()
+returns trigger language plpgsql set search_path=public as $$
+begin
+ if new.status='accepted' and old.status is distinct from 'accepted' then
+   new.accepted_at:=coalesce(new.accepted_at,new.responded_at,now());
+ end if;
+ return new;
+end $$;
+drop trigger if exists group_buy_accepted_at_stamp on public.group_buys;
+create trigger group_buy_accepted_at_stamp before update of status on public.group_buys
+for each row execute function public.set_group_buy_accepted_at();
+
+-- Cancellation/refusal triggers full deposit refunds; pending deposits are cancelled.
+create or replace function public.refund_group_buy_deposits_on_cancel()
+returns trigger language plpgsql security definer set search_path=public as $$
+begin
+ if new.status in ('declined','cancelled') and old.status is distinct from new.status then
+   update public.group_buy_deposits set
+     status=case when status in ('held','disputed','release_pending') then 'refund_pending'
+                 when status='pending' then 'cancelled' else status end,
+     updated_at=now()
+   where group_buy_id=new.id;
+ end if;
+ return new;
+end $$;
+drop trigger if exists group_buy_deposits_refund_on_cancel on public.group_buys;
+create trigger group_buy_deposits_refund_on_cancel after update of status on public.group_buys
+for each row execute function public.refund_group_buy_deposits_on_cancel();
+
+revoke all on function public.set_group_buy_accepted_at() from public,anon,authenticated;
+revoke all on function public.refund_group_buy_deposits_on_cancel() from public,anon,authenticated;
