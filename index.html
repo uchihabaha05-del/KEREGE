@@ -126,10 +126,13 @@ async function loadProducts(){let {data,error}=await db.from('products').select(
 function renderProducts(){
  const q=($('search').value||'').trim().toLowerCase();
  const category=$('categoryFilter')?.value||'';
- const a=products.filter(p=>{
+ let a=products.filter(p=>{
   const text=[p.name,p.category,p.supplier_public_profiles?.display_name,p.supplier_public_profiles?.city,p.city].join(' ').toLowerCase();
   return (!q||text.includes(q))&&(!category||p.category===category)&&(!supplierFilter||p.supplier_id===supplierFilter);
  });
+ const sort=$('sortProducts')?.value||'new';
+ if(sort==='priceUp')a.sort((x,y)=>Number(x.price)-Number(y.price));
+ else if(sort==='priceDown')a.sort((x,y)=>Number(y.price)-Number(x.price));
  $('catalogCount').textContent=a.length+' из '+products.length+' предложений';
  $('products').innerHTML=a.length?a.map(p=>{
   const photo=p.image_url?'<img src="'+esc(p.image_url)+'" alt="'+esc(p.name)+'" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'grid\'"><div class="product-placeholder" style="display:none">📦</div>':'<div class="product-placeholder">📦</div>';
