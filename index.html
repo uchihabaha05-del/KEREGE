@@ -477,7 +477,7 @@ async function loadUnifiedOrders(){
   '<button class="gold" style="margin-top:12px" onclick="updateUnifiedOrder(\''+o.id+'\',\'delivered\')">Подтвердить доставку</button>';
   if(supplier&&o.status==='ready_for_pickup')actions='<button class="gold" style="margin-top:12px" onclick="updateUnifiedOrder(\''+o.id+'\',\'completed\')">Завершить выдачу</button>';
   const fulfillment=o.delivery_method==='supplier_delivery'?'Доставка поставщиком':'Самовывоз';
-  return '<article class="order-card"><div class="order-head"><div><div class="order-id">KEREGE · №'+esc(String(o.order_number))+'</div><div class="order-name">Заказ от '+new Date(o.created_at).toLocaleDateString('ru-RU')+'</div></div><span class="status-pill '+(statusClass[o.status]||'')+'">'+esc(unifiedStatusLabel(o.status))+'</span></div>'+lines+'<div class="order-total">'+Number(o.total).toLocaleString('ru-RU')+' сом</div><div class="order-meta"><b>Получение:</b> '+fulfillment+(o.delivery_address?' · '+esc(o.delivery_address):'')+(o.delivery_note?' · '+esc(o.delivery_note):'')+'</div>'+(o.recipient_name||o.recipient_phone?'<div class="order-meta">Получатель: '+esc(o.recipient_name)+' · '+esc(o.recipient_phone)+'</div>':'')+(o.buyer_note?'<div class="order-meta">Комментарий: '+esc(o.buyer_note)+'</div>':'')+'<div class="order-meta">Оплата: ожидает подключения платёжного сервиса · '+esc(o.currency)+'</div>'+(o.courier_name||o.courier_phone||o.tracking_code||o.estimated_delivery_at?'<div class="order-meta"><b>Доставка:</b> '+esc(o.courier_name)+' '+(o.courier_phone?'<a href="tel:'+esc(o.courier_phone)+'">'+esc(o.courier_phone)+'</a>':'')+(o.tracking_code?' · Трек: '+esc(o.tracking_code):'')+(o.estimated_delivery_at?' · Ожидается: '+new Date(o.estimated_delivery_at).toLocaleString('ru-RU'):'')+'</div>':'')+(true&&['new','accepted'].includes(o.status)?'<button class="light" style="margin-top:10px" onclick="cancelBuyerOrder(\''+o.id+'\')">Отменить заказ</button>':'')+(profile.role==='buyer'&&['delivered','ready_for_pickup'].includes(o.status)?'<button class="gold" style="margin-top:10px" onclick="confirmBuyerReceived(\''+o.id+'\')">Подтвердить получение</button>':'')+(profile.role==='buyer'&&o.status==='completed'&&!reviewed.has(o.id)?'<button class="light" style="margin-top:10px" onclick="submitOrderReview(\''+o.id+'\')">Оценить поставщика</button>':'')+'<details class="order-timeline"><summary>История заказа</summary><div class="muted" style="padding:8px 0">'+((eventMap[o.id]||[]).map(e=>'<div>• '+esc(unifiedStatusLabel(e.new_status))+' — '+new Date(e.created_at).toLocaleString('ru-RU')+(e.note?' · '+esc(e.note):'')+'</div>').join('')||'История пока пуста')+'</div></details>'+actions+'</article>';
+  return '<article class="order-card"><div class="order-head"><div><div class="order-id">KEREGE · №'+esc(String(o.order_number))+'</div><div class="order-name">Заказ от '+new Date(o.created_at).toLocaleDateString('ru-RU')+'</div></div><span class="status-pill '+(statusClass[o.status]||'')+'">'+esc(unifiedStatusLabel(o.status))+'</span></div>'+lines+'<div class="order-total">'+Number(o.total).toLocaleString('ru-RU')+' сом</div><div class="order-meta"><b>Получение:</b> '+fulfillment+(o.delivery_address?' · '+esc(o.delivery_address):'')+(o.delivery_note?' · '+esc(o.delivery_note):'')+'</div>'+(o.recipient_name||o.recipient_phone?'<div class="order-meta">Получатель: '+esc(o.recipient_name)+' · '+esc(o.recipient_phone)+'</div>':'')+(o.buyer_note?'<div class="order-meta">Комментарий: '+esc(o.buyer_note)+'</div>':'')+'<div class="order-meta">Оплата: ожидает подключения платёжного сервиса · '+esc(o.currency)+'</div>'+(o.courier_name||o.courier_phone||o.tracking_code||o.estimated_delivery_at?'<div class="order-meta"><b>Доставка:</b> '+esc(o.courier_name)+' '+(o.courier_phone?'<a href="tel:'+esc(o.courier_phone)+'">'+esc(o.courier_phone)+'</a>':'')+(o.tracking_code?' · Трек: '+esc(o.tracking_code):'')+(o.estimated_delivery_at?' · Ожидается: '+new Date(o.estimated_delivery_at).toLocaleString('ru-RU'):'')+'</div>':'')+(true&&['new','accepted'].includes(o.status)?'<button class="light" style="margin-top:10px" onclick="cancelBuyerOrder(\''+o.id+'\')">Отменить заказ</button>':'')+(true&&['delivered','ready_for_pickup'].includes(o.status)?'<button class="gold" style="margin-top:10px" onclick="confirmBuyerReceived(\''+o.id+'\')">Подтвердить получение</button>':'')+(true&&o.status==='completed'&&!reviewed.has(o.id)?'<button class="light" style="margin-top:10px" onclick="submitOrderReview(\''+o.id+'\')">Оценить поставщика</button>':'')+'<details class="order-timeline"><summary>История заказа</summary><div class="muted" style="padding:8px 0">'+((eventMap[o.id]||[]).map(e=>'<div>• '+esc(unifiedStatusLabel(e.new_status))+' — '+new Date(e.created_at).toLocaleString('ru-RU')+(e.note?' · '+esc(e.note):'')+'</div>').join('')||'История пока пуста')+'</div></details>'+actions+'</article>';
  }).join(''):'<div class="empty-state">Полноценных заказов пока нет. Заказы из корзины появятся здесь.</div>';
 }
 async function loadRequests(){
@@ -502,15 +502,15 @@ async function loadRequests(){
   const h=await db.from('purchase_request_history').select('request_id,event_type,old_status,new_status,created_at').in('request_id',ids).order('created_at',{ascending:true});
   if(!h.error)(h.data||[]).forEach(e=>(historyMap[e.request_id]??=[]).push(e));
  }
- const peerIds=data.map(r=>profile.role==='supplier'?r.request_id:r.id);
+ const peerIds=data.map(r=>true?r.request_id:r.id);
  let peers={};
  if(peerIds.length){
   const p=await db.from('purchase_requests').select('id,buyer_id,supplier_id').in('id',peerIds);
-  if(!p.error)(p.data||[]).forEach(x=>peers[x.id]=profile.role==='supplier'?x.buyer_id:x.supplier_id);
+  if(!p.error)(p.data||[]).forEach(x=>peers[x.id]=true?x.buyer_id:x.supplier_id);
  }
  const statusClass={accepted:'accepted',declined:'declined',completed:'completed'};
  let orders=data.map(r=>{
-  const supplier=profile.role==='supplier';
+  const supplier=true;
   const id=supplier?r.request_id:r.id;
   const status=supplier?r.request_status:r.status;
   const name=supplier?r.product_name:(r.products?.name||'Товар');
@@ -596,7 +596,7 @@ function showSupplierProducts(id){
 async function loadOverview(){
  if(!user)return;
  const [orders,groups,favs]=await Promise.all([
-  profile.role==='supplier'?db.from('purchase_requests').select('id',{count:'exact',head:true}).eq('supplier_id',user.id):db.from('purchase_requests').select('id',{count:'exact',head:true}).eq('buyer_id',user.id),
+  true?db.from('purchase_requests').select('id',{count:'exact',head:true}).eq('supplier_id',user.id):db.from('purchase_requests').select('id',{count:'exact',head:true}).eq('buyer_id',user.id),
   db.from('group_buys').select('id',{count:'exact',head:true}).in('status',['open','target_reached']),
   db.from('product_favorites').select('product_id',{count:'exact',head:true}).eq('user_id',user.id)
  ]);
